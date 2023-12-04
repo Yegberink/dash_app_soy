@@ -270,11 +270,9 @@ top3_import_total_other = top3_import_total_other.sort_values(by=['Year', 'Value
 
 #%%
 import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
-
+import_tot_melted["Year"] = pd.to_numeric(import_tot_melted["Year"], errors="coerce").astype(int)
 
 app = Dash(__name__)
-
-server = app.server
 
 app.layout = html.Div([
     html.H1('Soy Trade to the EU', style={'textAlign': 'center'}),
@@ -305,17 +303,34 @@ app.layout = html.Div([
     html.Div(id='output-container', children=[]),
     
     # Graph for displaying the scatter_geo plot
-    dcc.Graph(id='graph-content')
+    dcc.Graph(id='scatter-graph-content'),
+    
+    # Year slider
+    dcc.Slider(
+        id='year-slider',
+        min=import_tot_melted['Year'].min(),
+        max=import_tot_melted['Year'].max(),
+        step=1,
+        marks={str(year): str(year) for year in import_tot_melted['Year'].unique()},
+        value=import_tot_melted['Year'].max()  # Set initial value to the maximum year
+    ),
+    
+    # Graph for the top 10 most exporting countries per year
+    dcc.Graph(id='bar-graph-content'),
+    
+
 ])
 
 @app.callback(
     [Output('output-container', 'children'),
-     Output('graph-content', 'figure')],
+     Output('scatter-graph-content', 'figure'),
+     Output('bar-graph-content', 'figure')],
     [Input('product-dropdown', 'value'),
-     Input('trade-type-radio', 'value')]
+     Input('trade-type-radio', 'value'),
+     Input('year-slider', 'value')]
 )
-def update_graph(selected_product, selected_trade_type):
-    container = f'Selected Product: {selected_product}, Selected Trade Type: {selected_trade_type}'
+def update_graph(selected_product, selected_trade_type, selected_year):
+    container = f'Selected Product: {selected_product}, Selected Trade Type: {selected_trade_type}, Selected Year: {selected_year}'
     
     if selected_product == 'soybeans':
         df = import_beans_melted if selected_trade_type == 'imports' else export_beans_melted
@@ -329,19 +344,29 @@ def update_graph(selected_product, selected_trade_type):
         # Default empty DataFrame if unknown product is selected
         df = pd.DataFrame()
 
+    # Filter the DataFrame based on the selected year
+    df_filtered = df[df['Year'] == selected_year]
+
     fig = px.scatter_geo(
-        df,
+        df_filtered,
         locations="ISO_A3_EH",
         hover_name="NAME_EN",
         size="Value",
-        animation_frame="Year",
         projection="natural earth",
         size_max=30,
         hover_data={"NAME_EN": False, "Value": True, "ISO_A3_EH": False, "Year": False }
     )
     
-    return container, fig
+    # Use the filtered DataFrame for the bar chart
+    fig2 = px.bar(
+        df_filtered.sort_values(by=['Value'], ascending=False).head(10),  # Sort and get top 10
+        x="NAME_EN",
+        y="Value",
+    )
+
+    return container, fig, fig2
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8053)
+    app.run_server(debug=True, port=8051)
+
 
