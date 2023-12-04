@@ -2,4 +2,4 @@ pandas
 geopandas
 plotly.express
 dash
-unigorn
+gunicorn
