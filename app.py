@@ -274,6 +274,8 @@ import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_
 
 app = Dash(__name__)
 
+server = app.server
+
 app.layout = html.Div([
     html.H1('Soy Trade to the EU', style={'textAlign': 'center'}),
     
