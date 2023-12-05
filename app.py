@@ -13,6 +13,7 @@ import geopandas as gpd
 import plotly.express as px
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 
 #Load data
 soy_publications = pd.read_csv("soy_europe.csv") #Soy publications on Europe
