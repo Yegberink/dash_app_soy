@@ -326,9 +326,14 @@ app.layout = dbc.Container([
         ]
     ),
 
-    html.Div(id='tabs-content'),
-
-    
+    dcc.Loading(
+        id="loading",
+        type="default",  # or "circle"
+        children=[
+            # This is where your graph or other content goes
+            html.Div(id='tabs-content'),
+        ]
+    ),
 
     # Year slider
     dcc.Slider(
@@ -400,3 +405,4 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
 
 if __name__ == '__main__':
     app.run(jupyter_mode="external", port = 8051)
+
