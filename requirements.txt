@@ -4,3 +4,4 @@ plotly.express
 dash
 gunicorn
 openpyxl
+dash_bootstrap_components
