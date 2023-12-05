@@ -337,13 +337,13 @@ app.layout = dbc.Container([
 
     # Year slider
     dcc.Slider(
-        id='year-slider',
-        min=import_tot_melted['Year'].min(),
-        max=import_tot_melted['Year'].max(),
-        step=1,
-        marks={str(year): str(year) for year in import_tot_melted['Year'].unique()},
-        value=import_tot_melted['Year'].min()  # Set initial value to the maximum year
-    ),
+    id='year-slider',
+    min=import_tot_melted['Year'].min(),
+    max=import_tot_melted['Year'].max(),
+    step=1,
+    marks={str(year): str(year) if year % 2 != 0 else '' for year in import_tot_melted['Year'].unique()},
+    value=import_tot_melted['Year'].min()  # Set initial value to the maximum year
+),
 ], fluid=True)
 
 @app.callback(
