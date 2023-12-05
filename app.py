@@ -272,41 +272,63 @@ top3_import_total_other = top3_import_total_other.sort_values(by=['Year', 'Value
 import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
 import_tot_melted["Year"] = pd.to_numeric(import_tot_melted["Year"], errors="coerce").astype(int)
 
+import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
+import_beans_melted["Year"] = pd.to_numeric(import_beans_melted["Year"], errors="coerce").astype(int)
+import_meal_melted["Year"] = pd.to_numeric(import_meal_melted["Year"], errors="coerce").astype(int)
+import_oil_melted["Year"] = pd.to_numeric(import_oil_melted["Year"], errors="coerce").astype(int)
+import_tot_melted["Year"] = pd.to_numeric(import_tot_melted["Year"], errors="coerce").astype(int)
+export_tot_melted["Year"] = pd.to_numeric(export_tot_melted["Year"], errors="coerce").astype(int)
+export_beans_melted["Year"] = pd.to_numeric(export_beans_melted["Year"], errors="coerce").astype(int)
+export_oil_melted["Year"] = pd.to_numeric(export_oil_melted["Year"], errors="coerce").astype(int)
+export_meal_melted["Year"] = pd.to_numeric(export_meal_melted["Year"], errors="coerce").astype(int)
+
+
 app = Dash(__name__)
 
 server = app.server
+# Sort and process your dataframes
 
-app.layout = html.Div([
-    html.H1('Soy Trade to the EU', style={'textAlign': 'center'}),
+app.layout = dbc.Container([
+    html.H1('Soy Trade with the EU', style={'textAlign': 'center'}),
     
-    # Dropdown for selecting product type
-    dcc.Dropdown(
-        options=[
-            {'label': 'Soybeans', 'value': 'soybeans'},
-            {'label': 'Soymeal', 'value': 'soymeal'},
-            {'label': 'Soy oils', 'value': 'soyoils'},
-            {'label': 'Total', 'value': 'total'}
-        ],
-        value='total',
-        id='product-dropdown'
+    html.P("Figures for the trade of soy to and from the EU. Import shows where the soy that is imported to the EU is from, and export shows where the soy that is exported from the EU goes to. Different soy products can be selected, and below the graph is a slider for year selection."),
+
+    
+    html.Div(
+        [dcc.Dropdown(
+                options=[
+                    {'label': 'Soybeans', 'value': 'soybeans'},
+                    {'label': 'Soymeal', 'value': 'soymeal'},
+                    {'label': 'Soy oils', 'value': 'soyoils'},
+                    {'label': 'Total', 'value': 'total'}
+                ],
+                value='total',
+                id='product-dropdown',
+                style={'margin-bottom': '10px', 'width': '50%'}
+            ),
+        dcc.RadioItems(
+            options=[
+                {'label': 'Imports', 'value': 'imports'},
+                {'label': 'Exports', 'value': 'exports'}
+            ],
+            value='imports',
+            id='trade-type-radio'
+        ),
+    ], style={'display': 'flex'}),
+    
+    dcc.Tabs(
+        id='tabs',
+        value='tab-1',
+        children=[
+            dcc.Tab(label='Map', value='tab-1'),
+            dcc.Tab(label='Bar chart', value='tab-2')
+        ]
     ),
+
+    html.Div(id='tabs-content'),
+
     
-    # RadioItems for selecting imports or exports
-    dcc.RadioItems(
-        options=[
-            {'label': 'Imports', 'value': 'imports'},
-            {'label': 'Exports', 'value': 'exports'}
-        ],
-        value='imports',
-        id='trade-type-radio'
-    ),
-    
-    # Div for displaying the selected values
-    html.Div(id='output-container', children=[]),
-    
-    # Graph for displaying the scatter_geo plot
-    dcc.Graph(id='scatter-graph-content'),
-    
+
     # Year slider
     dcc.Slider(
         id='year-slider',
@@ -314,39 +336,43 @@ app.layout = html.Div([
         max=import_tot_melted['Year'].max(),
         step=1,
         marks={str(year): str(year) for year in import_tot_melted['Year'].unique()},
-        value=import_tot_melted['Year'].max()  # Set initial value to the maximum year
+        value=import_tot_melted['Year'].min()  # Set initial value to the maximum year
     ),
-    
-    # Graph for the top 10 most exporting countries per year
-    dcc.Graph(id='bar-graph-content'),
-    
-
-])
+], fluid=True)
 
 @app.callback(
-    [Output('output-container', 'children'),
-     Output('scatter-graph-content', 'figure'),
-     Output('bar-graph-content', 'figure')],
+    Output('tabs-content', 'children'),
     [Input('product-dropdown', 'value'),
      Input('trade-type-radio', 'value'),
-     Input('year-slider', 'value')]
+     Input('year-slider', 'value'),
+     Input('tabs', 'value')]
 )
-def update_graph(selected_product, selected_trade_type, selected_year):
-    container = f'Selected Product: {selected_product}, Selected Trade Type: {selected_trade_type}, Selected Year: {selected_year}'
+def update_graph(selected_product, selected_trade_type, selected_year, selected_tab):
     
     if selected_product == 'soybeans':
-        df = import_beans_melted if selected_trade_type == 'imports' else export_beans_melted
+        if selected_trade_type == 'imports':
+            df = import_beans_melted 
+        else: 
+            df = export_beans_melted
     elif selected_product == 'soymeal':
-        df = import_meal_melted if selected_trade_type == 'imports' else export_meal_melted
+        if selected_trade_type == 'imports':
+            df = import_meal_melted 
+        else:
+            df = export_meal_melted
     elif selected_product == 'soyoils':
-        df = import_oil_melted if selected_trade_type == 'imports' else export_oil_melted
+        if selected_trade_type == 'imports':
+            df = import_oil_melted
+        else:
+            df = export_oil_melted
     elif selected_product == 'total':
-        df = import_tot_melted if selected_trade_type == 'imports' else export_tot_melted
+         if selected_trade_type == 'imports':
+             df = import_tot_melted
+         else:
+             df = export_tot_melted
     else:
-        # Default empty DataFrame if unknown product is selected
+        # Default empty DataFrame if an unknown product is selected
         df = pd.DataFrame()
-
-    # Filter the DataFrame based on the selected year
+    
     df_filtered = df[df['Year'] == selected_year]
 
     fig = px.scatter_geo(
@@ -354,21 +380,22 @@ def update_graph(selected_product, selected_trade_type, selected_year):
         locations="ISO_A3_EH",
         hover_name="NAME_EN",
         size="Value",
+        animation_frame="Year",
         projection="natural earth",
         size_max=30,
         hover_data={"NAME_EN": False, "Value": True, "ISO_A3_EH": False, "Year": False }
     )
+        
+    # Additional callback logic for the second graph
+    if selected_tab == 'tab-2':
+        fig = px.bar(
+            df_filtered.sort_values(by="Value", ascending=False).head(7),
+            x="NAME_EN",
+            y="Value"
+        )
     
-    # Use the filtered DataFrame for the bar chart
-    fig2 = px.bar(
-        df_filtered.sort_values(by=['Value'], ascending=False).head(10),  # Sort and get top 10
-        x="NAME_EN",
-        y="Value",
-    )
+    return [dcc.Graph(figure=fig)]
 
-    return container, fig, fig2
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8051)
-
-
+    app.run(jupyter_mode="external", port = 8051)
