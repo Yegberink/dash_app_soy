@@ -96,6 +96,7 @@ for value in countries_extraEU['Country_code']:
     clean_data = clean_data.replace(":", np.nan) #Make the missing values be represented as nan
     clean_data = clean_data.apply(pd.to_numeric, errors='coerce') #Make all cells be represented as numeric
     clean_data = clean_data.set_index(years)
+    clean_data = clean_data/10
     import_dfs[value] = clean_data #Save the df in a dictionary
     total_import = clean_data.sum(axis=1) #sum the import
     oil_import = clean_data['Oilcake & other solid residues of oil from soya beans'] #Select the different imports
@@ -115,6 +116,7 @@ for value in countries_extraEU['Country_code']:
     clean_data = clean_data.replace(":", np.nan) #Make the missing values be represented as nan
     clean_data = clean_data.apply(pd.to_numeric, errors='coerce') #Make all cells be represented as numeric
     clean_data = clean_data.set_index(years)
+    clean_data = clean_data/10
     export_dfs[value] = clean_data #Save the df in a dictionary
     total_export = clean_data.sum(axis=1) #sum the export
     oil_export = clean_data['Oilcake & other solid residues of oil from soya beans'] #Select the different exports
@@ -358,23 +360,33 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
     if selected_product == 'soybeans':
         if selected_trade_type == 'imports':
             df = import_beans_melted 
+            y_label = "Soybean import (tonnes)"
         else: 
             df = export_beans_melted
+            y_label = "Soybean export (tonnes)"
     elif selected_product == 'soymeal':
         if selected_trade_type == 'imports':
             df = import_meal_melted 
+            y_label = "Soymeal import (tonnes)"
         else:
             df = export_meal_melted
+            y_label = "Soymeal export (tonnes)"
+
     elif selected_product == 'soyoils':
         if selected_trade_type == 'imports':
             df = import_oil_melted
+            y_label = "Soybean oil import (tonnes)"
         else:
             df = export_oil_melted
+            y_label = "Soybean oil export (tonnes)"
+
     elif selected_product == 'total':
-         if selected_trade_type == 'imports':
-             df = import_tot_melted
-         else:
-             df = export_tot_melted
+        if selected_trade_type == 'imports':
+            df = import_tot_melted
+            y_label = "Total soy import (tonnes)"
+        else:
+            df = export_tot_melted
+            y_label = "Total soy export (tonnes)"
     else:
         # Default empty DataFrame if an unknown product is selected
         df = pd.DataFrame()
@@ -394,10 +406,21 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
         
     # Additional callback logic for the second graph
     if selected_tab == 'tab-2':
+
         fig = px.bar(
             df_filtered.sort_values(by="Value", ascending=False).head(7),
             x="NAME_EN",
-            y="Value"
+            y="Value",
+            labels={'NAME_EN': 'Country', 'Value': y_label},
+            title='7 countries with largest flow'
+        )
+
+        fig.update_layout(
+            title=dict(
+                text='7 countries with largest flow',
+                x=0.5,  # Set the x-coordinate to 0.5 for center alignment
+                xanchor='center'  # Anchor point for x-coordinate
+            )
         )
     
     return [dcc.Graph(figure=fig)]
