@@ -290,10 +290,10 @@ server = app.server
 # Sort and process your dataframes
 
 app.layout = dbc.Container([
-    html.H1('Soy Trade with the EU', style={'textAlign': 'center'}),
-    
-    html.P("Figures for the trade of soy to and from the EU. Import shows where the soy that is imported to the EU is from, and export shows where the soy that is exported from the EU goes to. Different soy products can be selected, and below the graph is a slider for year selection."),
-
+    html.H1('Soy Trade with the EU', style={'textAlign': 'center', 'fontFamily': 'Helvetica'}),
+    html.P("Figures for the trade of soy to and from the EU. Import shows where the soy that is imported to the EU is from, and export shows where the soy that is exported from the EU goes to. Different soy products can be selected, and below the graph is a slider for year selection.", 
+           style={'textAlign': 'center', 'margin': 'auto', 'fontFamily': 'Arial', 'width': '80%'}),
+    html.Br(),
     
     html.Div(
         [dcc.Dropdown(
