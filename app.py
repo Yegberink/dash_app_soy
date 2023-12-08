@@ -96,12 +96,12 @@ for value in countries_extraEU['Country_code']:
     clean_data = clean_data.replace(":", np.nan) #Make the missing values be represented as nan
     clean_data = clean_data.apply(pd.to_numeric, errors='coerce') #Make all cells be represented as numeric
     clean_data = clean_data.set_index(years)
-    clean_data = clean_data/10
-    import_dfs[value] = clean_data #Save the df in a dictionary
-    total_import = clean_data.sum(axis=1) #sum the import
-    oil_import = clean_data['Oilcake & other solid residues of oil from soya beans'] #Select the different imports
-    bean_import = clean_data['Soya beans'] #Select the different imports
-    meal_import =clean_data['Soya bean oil and its fractions'] #Select the different imports
+    clean_data_tonnes = clean_data/10 #divide the dataframe by 10 to get tonnes
+    import_dfs[value] = clean_data_tonnes #Save the df in a dictionary
+    total_import = clean_data_tonnes.sum(axis=1) #sum the import
+    meal_import = clean_data_tonnes['Oilcake & other solid residues of oil from soya beans'] #Select the different imports
+    bean_import = clean_data_tonnes['Soya beans'] #Select the different imports
+    oil_import =clean_data_tonnes['Soya bean oil and its fractions'] #Select the different imports
     import_tot[value] = total_import #Append the df
     import_beans[value] = bean_import #Append the df
     import_oil[value] = oil_import #Append the df
@@ -116,12 +116,12 @@ for value in countries_extraEU['Country_code']:
     clean_data = clean_data.replace(":", np.nan) #Make the missing values be represented as nan
     clean_data = clean_data.apply(pd.to_numeric, errors='coerce') #Make all cells be represented as numeric
     clean_data = clean_data.set_index(years)
-    clean_data = clean_data/10
-    export_dfs[value] = clean_data #Save the df in a dictionary
-    total_export = clean_data.sum(axis=1) #sum the export
-    oil_export = clean_data['Oilcake & other solid residues of oil from soya beans'] #Select the different exports
-    bean_export = clean_data['Soya beans'] #Select the different exports
-    meal_export =clean_data['Soya bean oil and its fractions'] #Select the different exports
+    clean_data_tonnes = clean_data/10
+    export_dfs[value] = clean_data_tonnes #Save the df in a dictionary
+    total_export = clean_data_tonnes.sum(axis=1) #sum the export
+    meal_export = clean_data_tonnes['Oilcake & other solid residues of oil from soya beans'] #Select the different exports
+    bean_export = clean_data_tonnes['Soya beans'] #Select the different exports
+    oil_export =clean_data_tonnes['Soya bean oil and its fractions'] #Select the different exports
     export_tot[value] = total_export #Append the df
     export_beans[value] = bean_export #Append the df
     export_oil[value] = oil_export #Append the df
@@ -172,7 +172,7 @@ production_EU_clean["Alpha-2 code"] = production_EU_clean.index
 gdf_world.loc[gdf_world["NAME_EN"] == "Serbia", "ISO_A2_EH"] = "XS"
 
 #Only keep the interesting columns from the gdf_world dataset
-columns_to_subset = ["ISO_A2_EH", "NAME_EN", "REGION_UN", "ISO_A3_EH"]
+columns_to_subset = ["ISO_A2_EH", "NAME_EN", "CONTINENT", "ISO_A3_EH"]
 world_geometries = gdf_world[columns_to_subset]
 
 #Merge with the polygon layer to get the countries in the dataframe
@@ -213,28 +213,38 @@ export_oil_clean = export_oil_clean.drop_duplicates("ISO_A3_EH")
 export_meal_clean = export_meal_clean.drop_duplicates("ISO_A3_EH")
 
 #%% Sum the continents
-import_tot_continents = import_tot_clean.groupby('REGION_UN').sum().reset_index()
-import_beans_continents = import_beans_clean.groupby('REGION_UN').sum().reset_index()
-import_oil_continents = import_oil_clean.groupby('REGION_UN').sum().reset_index()
-import_meal_continents = import_meal_clean.groupby('REGION_UN').sum().reset_index()
-export_tot_continents = export_tot_clean.groupby('REGION_UN').sum().reset_index()
-export_beans_continents = export_beans_clean.groupby('REGION_UN').sum().reset_index()
-export_oil_continents = export_oil_clean.groupby('REGION_UN').sum().reset_index()
-export_meal_continents = export_meal_clean.groupby('REGION_UN').sum().reset_index()
+import_tot_continents = import_tot_clean.groupby('CONTINENT').sum()
+import_beans_continents = import_beans_clean.groupby('CONTINENT').sum()
+import_oil_continents = import_oil_clean.groupby('CONTINENT').sum()
+import_meal_continents = import_meal_clean.groupby('CONTINENT').sum()
+export_tot_continents = export_tot_clean.groupby('CONTINENT').sum()
+export_beans_continents = export_beans_clean.groupby('CONTINENT').sum()
+export_oil_continents = export_oil_clean.groupby('CONTINENT').sum()
+export_meal_continents = export_meal_clean.groupby('CONTINENT').sum()
+
+#Select the first 24 colums
+import_tot_continents_clean = import_tot_continents.iloc[:, 0:24]
+import_beans_continents_clean = import_beans_continents.iloc[:, 0:24]
+import_oil_continents_clean = import_oil_continents.iloc[:, 0:24]
+import_meal_continents_clean = import_meal_continents.iloc[:, 0:24]
+export_tot_continents_clean = export_tot_continents.iloc[:, 0:24]
+export_beans_continents_clean = export_beans_continents.iloc[:, 0:24]
+export_oil_continents_clean = export_oil_continents.iloc[:, 0:24]
+export_meal_continents_clean = export_meal_continents.iloc[:, 0:24]
 
 #%% Make nice dataframes that can be used
 #Drop continents and ISO_codes from the previous dataframes
-import_tot_simple = import_tot_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
-import_beans_simple = import_beans_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
-import_oil_simple = import_oil_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
-import_meal_simple = import_meal_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
-export_tot_simple = export_tot_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
-export_beans_simple = export_beans_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
-export_oil_simple = export_oil_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
-export_meal_simple = export_meal_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
+import_tot_simple = import_tot_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
+import_beans_simple = import_beans_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
+import_oil_simple = import_oil_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
+import_meal_simple = import_meal_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
+export_tot_simple = export_tot_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
+export_beans_simple = export_beans_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
+export_oil_simple = export_oil_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
+export_meal_simple = export_meal_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
 
 #Production
-production_EU_simple = production_EU_countries.drop(['Alpha-2 code', 'ISO_A2_EH', 'REGION_UN'], axis=1)
+production_EU_simple = production_EU_countries.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
 
 #Change the format of the dataframes
 import_tot_melted = pd.melt(import_tot_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
@@ -256,35 +266,6 @@ export_tot_melted = export_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_
 export_beans_melted = export_beans_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
 export_oil_melted = export_oil_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
 export_meal_melted = export_meal_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
-
-#%%
-import_tot_melted = import_tot_melted.sort_values(by=['Year', 'Value'], ascending=[False, False]).reset_index(drop=True)
-
-names_to_in_exclude = ["USA", "BRA", "ARG"]
-top3_import_total = import_tot_melted[import_tot_melted['ISO_A3_EH'].isin(names_to_in_exclude)]
-
-other_imports = import_tot_melted[~import_tot_melted['ISO_A3_EH'].isin(names_to_in_exclude)]
-other_import_total = other_imports.groupby("Year", as_index=False).sum()
-other_import_total["ISO_A3_EH"] = 'Other'
-other_import_total["NAME_EN"] = 'Other'
-
-top3_import_total_other = pd.concat([top3_import_total, other_import_total], axis=0, ignore_index=True)
-top3_import_total_other = top3_import_total_other.sort_values(by=['Year', 'Value'], ascending=[True, False]).reset_index(drop=True)
-
-#%%
-import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
-import_tot_melted["Year"] = pd.to_numeric(import_tot_melted["Year"], errors="coerce").astype(int)
-
-import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
-import_beans_melted["Year"] = pd.to_numeric(import_beans_melted["Year"], errors="coerce").astype(int)
-import_meal_melted["Year"] = pd.to_numeric(import_meal_melted["Year"], errors="coerce").astype(int)
-import_oil_melted["Year"] = pd.to_numeric(import_oil_melted["Year"], errors="coerce").astype(int)
-import_tot_melted["Year"] = pd.to_numeric(import_tot_melted["Year"], errors="coerce").astype(int)
-export_tot_melted["Year"] = pd.to_numeric(export_tot_melted["Year"], errors="coerce").astype(int)
-export_beans_melted["Year"] = pd.to_numeric(export_beans_melted["Year"], errors="coerce").astype(int)
-export_oil_melted["Year"] = pd.to_numeric(export_oil_melted["Year"], errors="coerce").astype(int)
-export_meal_melted["Year"] = pd.to_numeric(export_meal_melted["Year"], errors="coerce").astype(int)
-
 
 app = Dash(__name__)
 
