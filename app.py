@@ -246,16 +246,34 @@ export_meal_simple = export_meal_clean.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTI
 #Production
 production_EU_simple = production_EU_countries.drop(['Alpha-2 code', 'ISO_A2_EH', 'CONTINENT'], axis=1)
 
-#Change the format of the dataframes
+# Change the format of the dataframes and convert 'Year' column to integers
 import_tot_melted = pd.melt(import_tot_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+import_tot_melted['Year'] = import_tot_melted['Year'].astype(int)
+
 import_beans_melted = pd.melt(import_beans_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+import_beans_melted['Year'] = import_beans_melted['Year'].astype(int)
+
 import_oil_melted = pd.melt(import_oil_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+import_oil_melted['Year'] = import_oil_melted['Year'].astype(int)
+
 import_meal_melted = pd.melt(import_meal_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+import_meal_melted['Year'] = import_meal_melted['Year'].astype(int)
+
 export_tot_melted = pd.melt(export_tot_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+export_tot_melted['Year'] = export_tot_melted['Year'].astype(int)
+
 export_beans_melted = pd.melt(export_beans_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+export_beans_melted['Year'] = export_beans_melted['Year'].astype(int)
+
 export_oil_melted = pd.melt(export_oil_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+export_oil_melted['Year'] = export_oil_melted['Year'].astype(int)
+
 export_meal_melted = pd.melt(export_meal_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+export_meal_melted['Year'] = export_meal_melted['Year'].astype(int)
+
 production_EU_melted = pd.melt(production_EU_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
+production_EU_melted['Year'] = production_EU_melted['Year'].astype(int)
+
 
 #Sort the dfs
 import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
