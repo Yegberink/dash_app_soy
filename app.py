@@ -293,7 +293,7 @@ server = app.server
 app.layout = dbc.Container([
     html.H1('Soy Trade with the EU', style={'textAlign': 'center', 'fontFamily': 'Helvetica'}),
     html.P("Figures for the trade of soy to and from the EU. Import shows where the soy that is imported to the EU is from, and export shows where the soy that is exported from the EU goes to. Different soy products can be selected, and below the graph is a slider for year selection.", 
-           style={'textAlign': 'center', 'margin': 'auto', 'fontFamily': 'Arial', 'width': '80%'}),
+           style={'textAlign': 'center', 'margin': 'auto', 'fontFamily': 'Helvetica', 'width': '80%'}),
     html.Br(),
     
     html.Div(
@@ -306,7 +306,7 @@ app.layout = dbc.Container([
                 ],
                 value='total',
                 id='product-dropdown',
-                style={'margin-bottom': '10px', 'width': '50%'}
+                style={'margin-bottom': '10px', 'width': '50%', 'fontFamily': 'Helvetica'}
             ),
         dcc.RadioItems(
             options=[
@@ -314,7 +314,8 @@ app.layout = dbc.Container([
                 {'label': 'Exports', 'value': 'exports'}
             ],
             value='imports',
-            id='trade-type-radio'
+            id='trade-type-radio',
+            style={'fontFamily': 'Helvetica'}
         ),
     ], style={'display': 'flex'}),
     
@@ -336,6 +337,9 @@ app.layout = dbc.Container([
         ]
     ),
 
+    #Add the source of the data
+    html.P("Data: Eurostat", style={'font-style': 'italic', 'text-align': 'right'}),
+  
     # Year slider
     dcc.Slider(
     id='year-slider',
