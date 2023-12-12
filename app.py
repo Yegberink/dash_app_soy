@@ -277,6 +277,9 @@ production_EU_melted['Year'] = production_EU_melted['Year'].astype(int)
 #Fill na with 0
 production_EU_melted = production_EU_melted.fillna(0)
 
+#Delete clipperton island
+production_EU_melted = production_EU_melted[production_EU_melted['NAME_EN'] != 'Clipperton Island']
+
 #Sort the dfs
 import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
 import_beans_melted = import_beans_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
