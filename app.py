@@ -274,6 +274,8 @@ export_meal_melted['Year'] = export_meal_melted['Year'].astype(int)
 production_EU_melted = pd.melt(production_EU_simple, id_vars=['NAME_EN', 'ISO_A3_EH'], var_name='Year', value_name='Value')
 production_EU_melted['Year'] = production_EU_melted['Year'].astype(int)
 
+#Fill na with 0
+production_EU_melted = production_EU_melted.fillna(0)
 
 #Sort the dfs
 import_tot_melted = import_tot_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
