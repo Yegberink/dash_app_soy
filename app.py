@@ -311,11 +311,13 @@ app.layout = dbc.Container([
         dcc.RadioItems(
             options=[
                 {'label': 'Imports', 'value': 'imports'},
-                {'label': 'Exports', 'value': 'exports'}
+                {'label': 'Exports', 'value': 'exports'},
+                {'label': 'Own production', 'value': 'production'}
             ],
             value='imports',
             id='trade-type-radio',
-            style={'fontFamily': 'Helvetica'}
+            inline = True,
+            style={'fontFamily': 'Helvetica', 'margin-right': '100px'}
         ),
     ], style={'display': 'flex'}),
     
@@ -343,14 +345,37 @@ app.layout = dbc.Container([
     # Year slider
     dcc.Slider(
     id='year-slider',
-    min=import_tot_melted['Year'].min(),
+    min=2000,
     max=import_tot_melted['Year'].max(),
     step=1,
-    marks={str(year): str(year) if year % 2 != 0 else '' for year in import_tot_melted['Year'].unique()},
-    value=import_tot_melted['Year'].min()  # Set initial value to the maximum year
+    marks={str(year): str(year) if year % 2 == 0 else '' for year in import_tot_melted['Year'].unique()},
+    value=2000  # Set initial value to the maximum year
 ),
 ], fluid=True)
 
+@app.callback(
+    [Output('product-dropdown', 'options'),
+     Output('product-dropdown', 'value')],
+    [Input('trade-type-radio', 'value')]
+)
+def update_product_dropdown_options(selected_trade_type):
+    # If 'Own production' is selected, set default value to 'soybeans'
+    if selected_trade_type == 'production':
+        options = [{'label': 'Soybeans', 'value': 'soybeans'}]
+        default_value = 'soybeans'
+    else:
+        # Otherwise, allow all products in the dropdown with a default value of 'total'
+        options = [
+            {'label': 'Soybeans', 'value': 'soybeans'},
+            {'label': 'Soymeal', 'value': 'soymeal'},
+            {'label': 'Soy oils', 'value': 'soyoils'},
+            {'label': 'Total', 'value': 'total'}
+        ]
+        default_value = 'total'
+    
+    return options, default_value
+
+# Define the existing update_graph callback
 @app.callback(
     Output('tabs-content', 'children'),
     [Input('product-dropdown', 'value'),
@@ -364,6 +389,9 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
         if selected_trade_type == 'imports':
             df = import_beans_melted 
             y_label = "Soybean import (tonnes)"
+        elif selected_trade_type == "production":
+            df = production_EU_melted
+            y_label = "Soybean production (100kg)"
         else: 
             df = export_beans_melted
             y_label = "Soybean export (tonnes)"
@@ -371,6 +399,9 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
         if selected_trade_type == 'imports':
             df = import_meal_melted 
             y_label = "Soymeal import (tonnes)"
+        elif selected_trade_type == "production":
+            df = production_EU_melted
+            y_label = "Soybean production (100kg)"
         else:
             df = export_meal_melted
             y_label = "Soymeal export (tonnes)"
@@ -379,6 +410,9 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
         if selected_trade_type == 'imports':
             df = import_oil_melted
             y_label = "Soybean oil import (tonnes)"
+        elif selected_trade_type == "production":
+            df = production_EU_melted
+            y_label = "Soybean production (100kg)"
         else:
             df = export_oil_melted
             y_label = "Soybean oil export (tonnes)"
@@ -387,6 +421,9 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
         if selected_trade_type == 'imports':
             df = import_tot_melted
             y_label = "Total soy import (tonnes)"
+        elif selected_trade_type == "production":
+            df = production_EU_melted
+            y_label = "Soybean production (100kg)"
         else:
             df = export_tot_melted
             y_label = "Total soy export (tonnes)"
@@ -395,17 +432,33 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
         df = pd.DataFrame()
     
     df_filtered = df[df['Year'] == selected_year]
+    
+    if selected_trade_type == "production":
+        fig = px.choropleth(
+            df_filtered,
+            locations='ISO_A3_EH',
+            featureidkey="properties.ISO_A3",
+            color='Value',
+            hover_name='NAME_EN',
+            projection='natural earth',
+            color_continuous_scale='bluyl',
+            range_color=(0, production_EU_melted['Value'].max()),
+            scope='europe',
+            center={'lat': 51, 'lon': 10},
+            color_discrete_map={'nan': 'white'},  # Set color for countries without data to white
+)
 
-    fig = px.scatter_geo(
-        df_filtered,
-        locations="ISO_A3_EH",
-        hover_name="NAME_EN",
-        size="Value",
-        animation_frame="Year",
-        projection="natural earth",
-        size_max=30,
-        hover_data={"NAME_EN": False, "Value": True, "ISO_A3_EH": False, "Year": False }
-    )
+    else:
+        fig = px.scatter_geo(
+            df_filtered,
+            locations="ISO_A3_EH",
+            hover_name="NAME_EN",
+            size="Value",
+            animation_frame="Year",
+            projection="natural earth",
+            size_max=30,
+            hover_data={"NAME_EN": False, "Value": True, "ISO_A3_EH": False, "Year": False }
+        )
         
     # Additional callback logic for the second graph
     if selected_tab == 'tab-2':
@@ -427,7 +480,6 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
         )
     
     return [dcc.Graph(figure=fig)]
-
 
 if __name__ == '__main__':
     app.run(jupyter_mode="external", port = 8051)
