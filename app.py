@@ -315,7 +315,7 @@ app.layout = dbc.Container([
             value='imports',
             id='trade-type-radio',
             inline = True,
-            style={'fontFamily': 'Helvetica', 'margin-right': '100px'}
+            style={'fontFamily': 'Helvetica'}
         ),
     ], style={'display': 'flex'}),
     
