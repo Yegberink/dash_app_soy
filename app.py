@@ -291,7 +291,7 @@ server = app.server
 # Sort and process your dataframes
 
 app.layout = dbc.Container([
-    
+    html.br()
     html.Div(
         [dcc.Dropdown(
                 options=[
