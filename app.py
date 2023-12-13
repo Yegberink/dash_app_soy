@@ -590,7 +590,7 @@ def func(n_clicks, selected_product, selected_trade_type, selected_year, selecte
 def func(n_clicks):
     
     # Read the Excel file with three sheets
-    excel_file_path = "data/data_download.xlsx"
+    excel_file_path = "data_download.xlsx"
     excel_data = pd.read_excel(excel_file_path, sheet_name=None)
 
     # Create a BytesIO object to hold the Excel file content
