@@ -9,11 +9,19 @@ Created on Mon Nov 20 11:21:53 2023
 #Load packages 
 import numpy as np
 import pandas as pd
+import os
 import geopandas as gpd
+import plotly as plt
 import plotly.express as px
 from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
+import pickle
+import matplotlib
+import io
+from xlsxwriter import Workbook
+
+
 
 #Load data
 soy_publications = pd.read_csv("soy_europe.csv") #Soy publications on Europe
@@ -34,6 +42,32 @@ production_data = pd.read_excel("apro_cpsh1__custom_8791857_spreadsheet.xlsx", #
                                    header=None, 
                                    skiprows=8,
                                    skipfooter=8) 
+
+#Load data
+soy_usage = pd.read_csv("Data/FAOSTAT_data_en_12-6-2023-6.csv") #Soy usage on Europe
+
+import_data = pd.read_excel("Data/ds-018995_page_spreadsheet-4.xlsx", #import data of soy
+                                   sheet_name = "Sheet 1", 
+                                   header=None, 
+                                   skiprows=8,
+                                   skipfooter=3) 
+gdf_world = gpd.read_file("Data/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp") #Polygons of the world
+
+download_data = 
+
+export_data = pd.read_excel("Data/ds-018995_page_spreadsheet-5.xlsx", # export data of soy
+                                   sheet_name = "Sheet 1", 
+                                   header=None, 
+                                   skiprows=8,
+                                   skipfooter=3) 
+
+production_data = pd.read_excel("Data/apro_cpsh1__custom_8791857_spreadsheet.xlsx", #own production of soy
+                                   sheet_name = "Sheet 1", 
+                                   header=None, 
+                                   skiprows=8,
+                                   skipfooter=8) 
+
+soy_balance_complete = pd.read_csv("Data/FAOSTAT_Complete_balance.csv")
 
 #%%
 EU_27 = ['AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'] #Country codes EU27
@@ -277,7 +311,7 @@ production_EU_melted['Year'] = production_EU_melted['Year'].astype(int)
 #Fill na with 0
 production_EU_melted = production_EU_melted.fillna(0)
 
-#Delete clipperton island
+#Delete the clipperton islands
 production_EU_melted = production_EU_melted[production_EU_melted['NAME_EN'] != 'Clipperton Island']
 
 #Sort the dfs
@@ -290,19 +324,43 @@ export_beans_melted = export_beans_melted.sort_values(by=['NAME_EN', 'Year']).re
 export_oil_melted = export_oil_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
 export_meal_melted = export_meal_melted.sort_values(by=['NAME_EN', 'Year']).reset_index(drop=True)
 
+#%%
+import_tot_melted = import_tot_melted.sort_values(by=['Year', 'Value'], ascending=[False, False]).reset_index(drop=True)
+
+names_to_in_exclude = ["USA", "BRA", "ARG"]
+top3_import_total = import_tot_melted[import_tot_melted['ISO_A3_EH'].isin(names_to_in_exclude)]
+
+other_imports = import_tot_melted[~import_tot_melted['ISO_A3_EH'].isin(names_to_in_exclude)]
+other_import_total = other_imports.groupby("Year", as_index=False).sum()
+other_import_total["ISO_A3_EH"] = 'Other'
+other_import_total["NAME_EN"] = 'Other'
+
+top3_import_total_other = pd.concat([top3_import_total, other_import_total], axis=0, ignore_index=True)
+top3_import_total_other = top3_import_total_other.sort_values(by=['Year', 'Value'], ascending=[True, False]).reset_index(drop=True)
+
+#%% clean the fao data
+usage_beans = soy_usage[soy_usage["Item"] == "Soya beans"]
+usage_oil = soy_usage[soy_usage["Item"] == "Soya bean oil"]
+usage_meal = soy_usage[soy_usage["Item"] == "Cake of  soya beans"]
+
 app = Dash(__name__)
 
 server = app.server
+
 # Sort and process your dataframes
 
 app.layout = dbc.Container([
+    html.H1('Soy Trade with the EU', style={'textAlign': 'center', 'fontFamily': 'Helvetica'}),
+    html.P("Figures for the trade of soy to and from the EU. Import shows where the soy that is imported to the EU is from, and export shows where the soy that is exported from the EU goes to. Different soy products can be selected, and below the graph is a slider for year selection.", 
+           style={'textAlign': 'center', 'margin': 'auto', 'fontFamily': 'Helvetica', 'width': '80%'}),
     html.Br(),
+    
     html.Div(
         [dcc.Dropdown(
                 options=[
-                    {'label': 'Soybeans', 'value': 'soybeans'},
-                    {'label': 'Soymeal', 'value': 'soymeal'},
-                    {'label': 'Soy oils', 'value': 'soyoils'},
+                    {'label': 'Unprocessed Soybeans', 'value': 'soybeans'},
+                    {'label': 'Soybean meal', 'value': 'soymeal'},
+                    {'label': 'Soybean oil', 'value': 'soyoils'},
                     {'label': 'Total', 'value': 'total'}
                 ],
                 value='total',
@@ -318,9 +376,15 @@ app.layout = dbc.Container([
             value='imports',
             id='trade-type-radio',
             inline = True,
-            style={'fontFamily': 'Helvetica'}
+            style={'fontFamily': 'Helvetica', 'margin-right': '20px'}
         ),
-    ], style={'display': 'flex'}),
+        html.Button("Download CSV", id="btn_csv", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
+        dcc.Download(id="download-dataframe-csv"),
+        
+        html.Button("Download Metadata", id="btn_xlsx", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
+        dcc.Download(id="download-dataframe-xlsx"),
+        
+        ], style={'display': 'flex'}),
     
     dcc.Tabs(
         id='tabs',
@@ -362,14 +426,14 @@ app.layout = dbc.Container([
 def update_product_dropdown_options(selected_trade_type):
     # If 'Own production' is selected, set default value to 'soybeans'
     if selected_trade_type == 'production':
-        options = [{'label': 'Soybeans', 'value': 'soybeans'}]
+        options = [{'label': 'Unprocessed Soybeans', 'value': 'soybeans'}]
         default_value = 'soybeans'
     else:
         # Otherwise, allow all products in the dropdown with a default value of 'total'
         options = [
-            {'label': 'Soybeans', 'value': 'soybeans'},
-            {'label': 'Soymeal', 'value': 'soymeal'},
-            {'label': 'Soy oils', 'value': 'soyoils'},
+            {'label': 'Unprocessed Soybeans', 'value': ''},
+            {'label': 'Soybean meal', 'value': 'soymeal'},
+            {'label': 'Soybean oil', 'value': 'soyoils'},
             {'label': 'Total', 'value': 'total'}
         ]
         default_value = 'total'
@@ -482,6 +546,95 @@ def update_graph(selected_product, selected_trade_type, selected_year, selected_
     
     return [dcc.Graph(figure=fig)]
 
+# Modify the func callback to accept the additional argument
+@app.callback(
+    Output("download-dataframe-csv", "data"),
+    Input("btn_csv", "n_clicks"),
+    State('product-dropdown', 'value'),
+    State('trade-type-radio', 'value'),
+    State('year-slider', 'value'),
+    State('tabs', 'value'),
+    prevent_initial_call=True,
+)
+def func(n_clicks, selected_product, selected_trade_type, selected_year, selected_tab):
+    if n_clicks is not None:
+  
+        if selected_product == 'soybeans':
+            if selected_trade_type == 'imports':
+                df = import_beans_melted 
+                y_label = "Soybean import (tonnes)"
+            elif selected_trade_type == "production":
+                df = production_EU_melted
+                y_label = "Soybean production (100kg)"
+            else: 
+                df = export_beans_melted
+                y_label = "Soybean export (tonnes)"
+        elif selected_product == 'soymeal':
+            if selected_trade_type == 'imports':
+                df = import_meal_melted 
+                y_label = "Soymeal import (tonnes)"
+            elif selected_trade_type == "production":
+                df = production_EU_melted
+                y_label = "Soybean production (100kg)"
+            else:
+                df = export_meal_melted
+                y_label = "Soymeal export (tonnes)"
+
+        elif selected_product == 'soyoils':
+            if selected_trade_type == 'imports':
+                df = import_oil_melted
+                y_label = "Soybean oil import (tonnes)"
+            elif selected_trade_type == "production":
+                df = production_EU_melted
+                y_label = "Soybean production (100kg)"
+            else:
+                df = export_oil_melted
+                y_label = "Soybean oil export (tonnes)"
+
+        elif selected_product == 'total':
+            if selected_trade_type == 'imports':
+                df = import_tot_melted
+                y_label = "Total soy import (tonnes)"
+            elif selected_trade_type == "production":
+                df = production_EU_melted
+                y_label = "Soybean production (100kg)"
+            else:
+                df = export_tot_melted
+                y_label = "Total soy export (tonnes)"
+        else:
+            # Default empty DataFrame if an unknown product is selected
+            df = pd.DataFrame()
+    
+    df_pandas = pd.DataFrame(df)
+    return dcc.send_data_frame(df_pandas.to_csv, "current_dataframe.csv")  # Use df_pandas here
+    
+@app.callback(
+    Output("download-dataframe-xlsx", "data"),
+    Input("btn_xlsx", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func(n_clicks):
+    
+    # Read the Excel file with three sheets
+    excel_file_path = "data/data_download.xlsx"
+    excel_data = pd.read_excel(excel_file_path, sheet_name=None)
+
+    # Create a BytesIO object to hold the Excel file content
+    excel_buffer = io.BytesIO()
+
+    # Create an Excel writer object
+    with pd.ExcelWriter(excel_buffer, engine="xlsxwriter") as writer:
+        # Write each sheet to the Excel file
+        for sheet_name, sheet_data in excel_data.items():
+            sheet_data.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    # Set the buffer position to the beginning
+    excel_buffer.seek(0)
+
+    # Return the Excel file content for download
+    return dcc.send_bytes(excel_buffer.read(), "metadata.xlsx")
+    
 if __name__ == '__main__':
-    app.run(jupyter_mode="external", port = 8051)
+    app.run(jupyter_mode="external", port=8090)
+
 
