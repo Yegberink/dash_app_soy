@@ -53,8 +53,6 @@ import_data = pd.read_excel("Data/ds-018995_page_spreadsheet-4.xlsx", #import da
                                    skipfooter=3) 
 gdf_world = gpd.read_file("Data/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp") #Polygons of the world
 
-download_data = 
-
 export_data = pd.read_excel("Data/ds-018995_page_spreadsheet-5.xlsx", # export data of soy
                                    sheet_name = "Sheet 1", 
                                    header=None, 
