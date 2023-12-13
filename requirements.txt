@@ -5,3 +5,5 @@ dash
 gunicorn
 openpyxl
 dash_bootstrap_components
+io
+xlsxwriter
