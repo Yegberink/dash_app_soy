@@ -21,16 +21,16 @@ import matplotlib
 import io
 from xlsxwriter import Workbook
 
-
-
 #Load data
-soy_publications = pd.read_csv("soy_europe.csv") #Soy publications on Europe
+soy_usage = pd.read_csv("FAOSTAT_data_en_12-6-2023-6.csv") #Soy usage on Europe
+
 import_data = pd.read_excel("ds-018995_page_spreadsheet-4.xlsx", #import data of soy
                                    sheet_name = "Sheet 1", 
                                    header=None, 
                                    skiprows=8,
                                    skipfooter=3) 
 gdf_world = gpd.read_file("ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp") #Polygons of the world
+
 export_data = pd.read_excel("ds-018995_page_spreadsheet-5.xlsx", # export data of soy
                                    sheet_name = "Sheet 1", 
                                    header=None, 
@@ -43,29 +43,7 @@ production_data = pd.read_excel("apro_cpsh1__custom_8791857_spreadsheet.xlsx", #
                                    skiprows=8,
                                    skipfooter=8) 
 
-#Load data
-soy_usage = pd.read_csv("Data/FAOSTAT_data_en_12-6-2023-6.csv") #Soy usage on Europe
-
-import_data = pd.read_excel("Data/ds-018995_page_spreadsheet-4.xlsx", #import data of soy
-                                   sheet_name = "Sheet 1", 
-                                   header=None, 
-                                   skiprows=8,
-                                   skipfooter=3) 
-gdf_world = gpd.read_file("Data/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp") #Polygons of the world
-
-export_data = pd.read_excel("Data/ds-018995_page_spreadsheet-5.xlsx", # export data of soy
-                                   sheet_name = "Sheet 1", 
-                                   header=None, 
-                                   skiprows=8,
-                                   skipfooter=3) 
-
-production_data = pd.read_excel("Data/apro_cpsh1__custom_8791857_spreadsheet.xlsx", #own production of soy
-                                   sheet_name = "Sheet 1", 
-                                   header=None, 
-                                   skiprows=8,
-                                   skipfooter=8) 
-
-soy_balance_complete = pd.read_csv("Data/FAOSTAT_Complete_balance.csv")
+soy_balance_complete = pd.read_csv("FAOSTAT_Complete_balance.csv")
 
 #%%
 EU_27 = ['AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'] #Country codes EU27
