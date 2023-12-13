@@ -325,22 +325,21 @@ server = app.server
 
 # Sort and process your dataframes
 
-app.layout = dbc.Container([
-   
+app.layout = dbc.Container(fluid=True, children=[
     html.Br(),
-    
-    html.Div(
-        [dcc.Dropdown(
-                options=[
-                    {'label': 'Unprocessed Soybeans', 'value': 'soybeans'},
-                    {'label': 'Soybean meal', 'value': 'soymeal'},
-                    {'label': 'Soybean oil', 'value': 'soyoils'},
-                    {'label': 'Total', 'value': 'total'}
-                ],
-                value='total',
-                id='product-dropdown',
-                style={'margin-bottom': '10px', 'width': '50%', 'fontFamily': 'Helvetica'}
-            ),
+
+    html.Div([
+        dcc.Dropdown(
+            options=[
+                {'label': 'Unprocessed Soybeans', 'value': 'soybeans'},
+                {'label': 'Soybean meal', 'value': 'soymeal'},
+                {'label': 'Soybean oil', 'value': 'soyoils'},
+                {'label': 'Total', 'value': 'total'}
+            ],
+            value='total',
+            id='product-dropdown',
+            style={'margin-bottom': '10px', 'width': '50%', 'fontFamily': 'Helvetica'}
+        ),
         dcc.RadioItems(
             options=[
                 {'label': 'Imports', 'value': 'imports'},
@@ -349,17 +348,16 @@ app.layout = dbc.Container([
             ],
             value='imports',
             id='trade-type-radio',
-            inline = True,
+            inline=True,
             style={'fontFamily': 'Helvetica', 'margin-right': '20px'}
         ),
         html.Button("Download CSV", id="btn_csv", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
         dcc.Download(id="download-dataframe-csv"),
-        
+
         html.Button("Download Metadata", id="btn_xlsx", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
         dcc.Download(id="download-dataframe-xlsx"),
-        
-        ], style={'display': 'flex'}),
-    
+    ], style={'display': 'flex'}),
+
     dcc.Tabs(
         id='tabs',
         value='tab-1',
@@ -378,19 +376,19 @@ app.layout = dbc.Container([
         ]
     ),
 
-    #Add the source of the data
+    # Add the source of the data
     html.P("Data: Eurostat", style={'font-style': 'italic', 'text-align': 'right'}),
-  
+
     # Year slider
     dcc.Slider(
-    id='year-slider',
-    min=2000,
-    max=import_tot_melted['Year'].max(),
-    step=1,
-    marks={str(year): str(year) if year % 2 == 0 else '' for year in import_tot_melted['Year'].unique()},
-    value=2000  # Set initial value to the maximum year
-),
-], fluid=True)
+        id='year-slider',
+        min=2000,
+        max=import_tot_melted['Year'].max(),
+        step=1,
+        marks={str(year): str(year) if year % 2 == 0 else '' for year in import_tot_melted['Year'].unique()},
+        value=2000  # Set initial value to the maximum year
+    ),
+])
 
 @app.callback(
     [Output('product-dropdown', 'options'),
