@@ -351,11 +351,14 @@ app.layout = dbc.Container(fluid=True, children=[
             inline=True,
             style={'fontFamily': 'Helvetica', 'margin-right': '20px'}
         ),
-        html.Button("Download CSV", id="btn_csv", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
-        dcc.Download(id="download-dataframe-csv"),
-
-        html.Button("Download Metadata", id="btn_xlsx", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
-        dcc.Download(id="download-dataframe-xlsx"),
+        dbc.Spinner(children=[
+            html.Button("Download CSV", id="btn_csv", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
+            dcc.Download(id="download-dataframe-csv"),
+        ], color="primary"),
+        dbc.Spinner(children=[
+            html.Button("Download Metadata", id="btn_xlsx", style={'fontFamily': 'Helvetica', 'margin-right': '20px', 'margin-bottom': '10px'}),
+            dcc.Download(id="download-dataframe-xlsx"),
+        ], color="primary"),
     ], style={'display': 'flex'}),
 
     dcc.Tabs(
